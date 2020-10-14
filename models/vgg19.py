@@ -1,9 +1,9 @@
 import tensorflow as tf
 
 
-class VGG16:
+class VGG19:
     def __init__(self, weights, classes):
-        self.model = tf.keras.applications.VGG16(
+        self.model = tf.keras.applications.VGG19(
             include_top=True,
             weights=weights,
             classes=classes,
@@ -21,7 +21,7 @@ class VGG16:
         return tf.nn.softmax(self.model.predict(X)).numpy()
 
     def decode_predictions(self, preds):
-        return tf.keras.applications.vgg16.decode_predictions(preds=preds)
+        return tf.keras.applications.vgg19.decode_predictions(preds=preds)
 
     def summary(self):
         self.model.summary()
