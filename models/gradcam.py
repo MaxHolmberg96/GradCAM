@@ -1,23 +1,33 @@
 import tensorflow as tf
-tf.executing_eagerly()
+
 
 class GradCAM:
-
     def __init__(self, model):
         self.model = model
 
     def get_all_layer_outputs(self, X):
-        func = tf.keras.backend.function([self.model.layers[0].input], [l.output for l in self.model.layers[1:]])
+        func = tf.keras.backend.function(
+            [self.model.layers[0].input], [layer.output for layer in self.model.layers[1:]]
+        )
         layer_outputs = func([X])
-        layer_outputs.insert(0, X) # Add so image is the output of the input :)
+        layer_outputs.insert(0, X)  # Add so image is the output of the input :)
         return layer_outputs
 
-    def get_gradients(self, index, input, output_last):
-        feature_activations = self.model.get_layer(index=index)(input)
-        opt = tf.keras.optimizers.SGD()
-        gradient_step = opt.compute_gradients(output_last, feature_activations)
-        return gradient_step
+    def get_gradients(self, c, conv_layer, image):
+        grad_model = tf.keras.models.Model(
+            [self.model.inputs], [self.model.get_layer(conv_layer).output, self.model.output]
+        )
 
+        with tf.GradientTape() as tape:
+            conv_outputs, predictions = grad_model(image)
+            loss = predictions[:, c]
 
-    def global_average_pooling(self, gradients):
-        print(gradients.shape)
+        output = conv_outputs[0]
+        grads = tape.gradient(loss, conv_outputs)[0]
+        return grads, output
+
+    def __call__(self, c, conv_layer, image):
+        grads, output = self.get_gradients(c, conv_layer, image)
+        alphas = tf.math.reduce_sum(grads, axis=[0, 1])
+        result = tf.reduce_sum(alphas * output, axis=-1)
+        return tf.nn.relu(result)
