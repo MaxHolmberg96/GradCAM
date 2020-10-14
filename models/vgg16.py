@@ -1,7 +1,7 @@
 import tensorflow as tf
 
-class VGG16:
 
+class VGG16:
     def __init__(self, weights, classes):
         self.model = tf.keras.applications.VGG16(
             include_top=True,
@@ -13,7 +13,6 @@ class VGG16:
             classifier_activation="softmax",
         )
         self.shape = (224, 224)
-
 
     def preprocess_image(self, image):
         return tf.image.resize(image, self.shape)

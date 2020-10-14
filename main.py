@@ -1,6 +1,9 @@
 import tensorflow as tf
+import numpy as np
 from models.vgg16 import VGG16
 from models.gradcam import GradCAM
+import matplotlib.pyplot as plt
+import cv2
 
 vgg16_model = VGG16(weights="imagenet", classes=1000)
 vgg16_model.summary()
@@ -11,5 +14,8 @@ preds = vgg16_model.predict(image)
 
 gradcam = GradCAM(vgg16_model.model)
 layer_outputs = gradcam.get_all_layer_outputs(image)
-print()
-gradcam.get_gradients(index=17, input=layer_outputs[16], output_last=layer_outputs[-2])
+result = gradcam(c=np.argmax(preds), conv_layer="block5_conv3", image=image)
+cam = cv2.resize(result.numpy(), (224, 224), cv2.INTER_LINEAR)
+plt.imshow(image[0, ...] / 255)
+plt.imshow(cam, cmap="jet", alpha=0.5)
+plt.show()
