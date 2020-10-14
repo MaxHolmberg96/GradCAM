@@ -1,6 +1,5 @@
 import tensorflow as tf
 
-
 class VGG16:
 
     def __init__(self, weights, classes):
@@ -24,5 +23,12 @@ class VGG16:
     def predict(self, X):
         return self.model.predict(X)
 
+    def get_all_layer_outputs(self, X):
+        func = tf.keras.backend.function([self.model.layers[0].input], [l.output for l in self.model.layers[1:]])
+        return func([X])
+
     def decode_predictions(self, preds):
         return tf.keras.applications.vgg16.decode_predictions(preds=preds)
+
+    def summary(self):
+        self.model.summary()
