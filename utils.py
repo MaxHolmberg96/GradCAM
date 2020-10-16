@@ -67,3 +67,31 @@ def get_top_class_indices(preds, top=5):
 def show_image(image):
     plt.imshow(image.numpy()[0, ...] / 255)
     plt.show()
+
+def evaluate(predictions, ground_truths):
+    min_error_list = []
+    for prediction in predictions:
+        max_error_list = []
+        for ground_truth in ground_truths:
+            if prediction[0] == ground_truth[0]:
+                d = 0
+            else:
+                d = 1
+            if overlap(prediction[1], ground_truth[1]) > 0.5:
+                f = 0
+            else:
+                f = 1
+            max_error_list.append(max(d, f))
+        min_error_list.append(min(max_error_list))
+    return min(min_error_list)
+
+
+def overlap(rect1, rect2):
+    intersect_area = max(
+        0, min(rect1["x_max"], rect2["x_max"]) - max(rect1["x_min"], rect2["x_min"])
+    ) * max(
+        0, min(rect1["y_max"], rect2["y_max"]) - max(rect1["y_min"], rect2["y_min"])
+    )
+    area_rect1 = (rect1["x_max"] - rect1["x_min"]) * (rect1["y_max"] - rect1["y_min"])
+    area_rect2 = (rect2["x_max"] - rect2["x_min"]) * (rect2["y_max"] - rect2["y_min"])
+    return intersect_area / (area_rect1 + area_rect2 - intersect_area)
