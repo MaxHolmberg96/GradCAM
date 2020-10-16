@@ -6,10 +6,12 @@ import cv2
 
 def get_files(file_path):
     from os import walk
+
     f = []
     for _, _, filenames in walk(file_path):
         f.extend(filenames)
     return f
+
 
 def draw_bounding_box(image, xmin, ymin, xmax, ymax):
     if len(image.shape) == 4:
@@ -38,3 +40,32 @@ def draw_bounding_box_from_heatmap(image, heatmap):
     threshhold = 0.15 * np.max(heatmap)
     thresh = cv2.threshold(heatmap, threshhold, np.max(heatmap), cv2.THRESH_BINARY)
     cnts = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+
+def evaluate(predictions, ground_truths):
+    min_error_list = []
+    for prediction in predictions:
+        max_error_list = []
+        for ground_truth in ground_truths:
+            if prediction[0] == ground_truth[0]:
+                d = 0
+            else:
+                d = 1
+            if overlap(prediction[1], ground_truth[1]) > 0.5:
+                f = 0
+            else:
+                f = 1
+            max_error_list.append(max(d, f))
+        min_error_list.append(min(max_error_list))
+    return min(min_error_list)
+
+
+def overlap(rect1, rect2):
+    intersect_area = max(
+        0, min(rect1["x_max"], rect2["x_max"]) - max(rect1["x_min"], rect2["x_min"])
+    ) * max(
+        0, min(rect1["y_max"], rect2["y_max"]) - max(rect1["y_min"], rect2["y_min"])
+    )
+    area_rect1 = (rect1["x_max"] - rect1["x_min"]) * (rect1["y_max"] - rect1["y_min"])
+    area_rect2 = (rect2["x_max"] - rect2["x_min"]) * (rect2["y_max"] - rect2["y_min"])
+    return intersect_area / (area_rect1 + area_rect2 - intersect_area)
