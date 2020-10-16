@@ -42,7 +42,8 @@ class GradCAM:
         return tf.nn.relu(linear_combinaton)
 
     def show(self, heatmap, image):
-        cam = cv2.resize(heatmap.numpy(), (224, 224), cv2.INTER_LINEAR)
         plt.imshow(image[0, ...] / 255)
-        plt.imshow(cam, cmap="jet", alpha=0.5)
+        if heatmap is not None:
+            cam = cv2.resize(heatmap, (image.shape[1], image.shape[2]), cv2.INTER_LINEAR)
+            plt.imshow(cam, cmap="jet", alpha=0.5)
         plt.show()
