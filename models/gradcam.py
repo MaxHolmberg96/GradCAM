@@ -44,6 +44,6 @@ class GradCAM:
     def show(self, heatmap, image):
         plt.imshow(image[0, ...] / 255)
         if heatmap is not None:
-            cam = cv2.resize(heatmap, (image.shape[1], image.shape[2]), cv2.INTER_LINEAR)
+            cam = cv2.resize(heatmap, (image.shape[2], image.shape[1]), cv2.INTER_LINEAR)
             plt.imshow(cam, cmap="jet", alpha=0.5)
         plt.show()

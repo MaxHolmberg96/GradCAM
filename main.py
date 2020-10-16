@@ -2,7 +2,8 @@ import tensorflow as tf
 import numpy as np
 from models.vgg16 import VGG16
 from models.gradcam import GradCAM
-from utils import draw_bounding_box_from_file, get_files, ILSVRC2012VAL_BB_PATH, ILSVRC2012VAL_PATH
+from utils import *
+from path import *
 
 
 images_list = get_files(ILSVRC2012VAL_PATH)
@@ -23,14 +24,15 @@ heatmap = gradcam.get_heatmap(c=np.argmax(preds), image=image).numpy()
 threshold = (0.15 * np.max(heatmap))
 binarized_heatmap = np.zeros_like(heatmap)
 binarized_heatmap[heatmap > threshold] = 1
-#gradcam.show(binarized_heatmap, image)
 
 original = model.load_image(ILSVRC2012VAL_PATH + images_list[0])
 original = tf.expand_dims(original, 0)
 original = draw_bounding_box_from_file(original, boundingbox_list[0])
-import matplotlib.pyplot as plt
-plt.imshow(original.numpy()[0, ...] / 255)
-plt.show()
+draw_bounding_box_from_heatmap(image, heatmap)
+gradcam.show(binarized_heatmap, original)
+#import matplotlib.pyplot as plt
+#plt.imshow(original.numpy()[0, ...] / 255)
+#plt.show()
 #gradcam.show(heatmap, image)
 
 
