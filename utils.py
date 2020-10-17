@@ -20,7 +20,7 @@ def draw_bounding_box(image, xmin, ymin, xmax, ymax):
     else:
         print("Image need to have shape (batch, height, width, channels)")
         return
-    box = np.array([ymin / height, xmin / width, ymax / height, xmax / width])
+    box = np.array([ymin, xmin, ymax, xmax])
     boxes = box.reshape([1, 1, 4])
     colors = np.array([[1.0, 0.0, 0.0], [0.0, 0.0, 1.0]])
     return tf.image.draw_bounding_boxes(image, boxes, colors)
@@ -89,10 +89,9 @@ def get_map_of_classes(preds, decoded_preds):
     return m
 
 
-def get_heatmaps_and_bbs(gradcam, image, class_map, top=5):
+def get_heatmaps_and_bbs(gradcam, image, class_map):
     heatmaps = []
     max_val = 0
-    predicted_classes = get_top_class_indices(predictions, top=top)
 
     for predicted_class in class_map.keys():
         heatmaps.append(gradcam.get_heatmap(c=predicted_class, image=image).numpy())
@@ -115,6 +114,7 @@ def show_image_with_bb(image, bb):
     image = draw_bounding_box(image, bb['xmin'], bb['ymin'], bb['xmax'], bb['ymax'])
     plt.imshow(image.numpy()[0, ...] / 255)
     plt.show()
+
 
 def show_image_with_bbs(image, bbs):
     for bb in bbs:

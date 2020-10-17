@@ -29,15 +29,18 @@ image = model.load_image(ILSVRC2012VAL_PATH + images_list[image_index])
 image = model.preprocess_image(image)
 image = tf.expand_dims(image, 0)
 preds = model.predict(image)
-decoded_preds = model.decode_predictions(preds, top=1)
+decoded_preds = model.decode_predictions(preds, top=5)
 print(decoded_preds)
 gradcam = GradCAM(model.model)
-heatmaps, boundingboxes = get_heatmaps_and_bbs(gradcam=gradcam, image=image, predictions=preds, top=1)
-
-format_ground_truth(ILSVRC2012VAL_BB_PATH + boundingbox_list[0])
+heatmaps, predictions = get_heatmaps_and_bbs(gradcam=gradcam, image=image, class_map=get_map_of_classes(preds, decoded_preds))
 
 groundtruth = format_ground_truth(ILSVRC2012VAL_BB_PATH + boundingbox_list[image_index])
 print(groundtruth)
 print(evaluate(predictions=predictions, ground_truths=groundtruth))
-show_image_with_bbs(image, [predictions[0][1], groundtruth[0][1]])
-show_image_with_heatmap(gradcam, image, np.argmax(preds))
+bbs = []
+for gbb in groundtruth:
+    bbs.append(gbb[1])
+
+orginal = tf.expand_dims(model.load_image(ILSVRC2012VAL_PATH + images_list[image_index]), 0)
+show_image_with_bbs(orginal, bbs)
+#show_image_with_heatmap(gradcam, image, np.argmax(preds))
