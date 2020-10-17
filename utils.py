@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 
 def get_files(file_path):
     from os import walk
+
     f = []
     for _, _, filenames in walk(file_path):
         f.extend(filenames)
@@ -26,8 +27,14 @@ def draw_bounding_box(image, xmin, ymin, xmax, ymax):
 
 
 def draw_bounding_box_from_file(image, file_path):
-    bounding_box = format_ground_truth(file_path)[1]
-    return draw_bounding_box(image, bounding_box['xmin'], bounding_box['ymin'], bounding_box['xmax'], bounding_box['ymax'])
+    bounding_box = format_ground_truth(file_path)[0][1]
+    return draw_bounding_box(
+        image,
+        bounding_box["xmin"],
+        bounding_box["ymin"],
+        bounding_box["xmax"],
+        bounding_box["ymax"],
+    )
 
 
 def get_contours(heatmap, reshape_size, threshold, max_val):
@@ -40,8 +47,16 @@ def get_contours(heatmap, reshape_size, threshold, max_val):
 
 
 def draw_bounding_box_from_heatmap(image, heatmap, threshold, max_val):
-    boundingbox = get_bounding_box_from_heatmap(heatmap, (image.shape[2], image.shape[1]), threshold, max_val)
-    return draw_bounding_box(image, boundingbox['xmin'], boundingbox['ymin'], boundingbox['xmax'], boundingbox['ymax'])
+    boundingbox = get_bounding_box_from_heatmap(
+        heatmap, (image.shape[2], image.shape[1]), threshold, max_val
+    )
+    return draw_bounding_box(
+        image,
+        boundingbox["xmin"],
+        boundingbox["ymin"],
+        boundingbox["xmax"],
+        boundingbox["ymax"],
+    )
 
 
 def get_bounding_box_from_heatmap(heatmap, reshape_size, threshold, max_val):
@@ -77,6 +92,7 @@ def get_map_of_classes(preds, decoded_preds):
 def get_heatmaps_and_bbs(gradcam, image, class_map, top=5):
     heatmaps = []
     max_val = 0
+    predicted_classes = get_top_class_indices(predictions, top=top)
 
     for predicted_class in class_map.keys():
         heatmaps.append(gradcam.get_heatmap(c=predicted_class, image=image).numpy())
@@ -133,18 +149,24 @@ def evaluate(predictions, ground_truths):
 def overlap(rect1, rect2):
     intersect_area = max(
         0, min(rect1["xmax"], rect2["xmax"]) - max(rect1["xmin"], rect2["xmin"])
-    ) * max(
-        0, min(rect1["ymax"], rect2["ymax"]) - max(rect1["ymin"], rect2["ymin"])
-    )
+    ) * max(0, min(rect1["ymax"], rect2["ymax"]) - max(rect1["ymin"], rect2["ymin"]))
     area_rect1 = (rect1["xmax"] - rect1["xmin"]) * (rect1["ymax"] - rect1["ymin"])
     area_rect2 = (rect2["xmax"] - rect2["xmin"]) * (rect2["ymax"] - rect2["ymin"])
     return intersect_area / (area_rect1 + area_rect2 - intersect_area)
 
+
 def format_ground_truth(file_path):
     root = ET.parse(file_path).getroot()
-    xmin = int(root.find("object").find("bndbox").findtext("xmin"))
-    ymin = int(root.find("object").find("bndbox").findtext("ymin"))
-    xmax = int(root.find("object").find("bndbox").findtext("xmax"))
-    ymax = int(root.find("object").find("bndbox").findtext("ymax"))
-    cls = root.find("object").findtext("name")
-    return [(cls, {'xmin': xmin, 'xmax': xmax, 'ymin': ymin, 'ymax': ymax})]
+    objects = root.findall("object")
+    ground_truths = []
+    for i in range(len(objects)):
+        xmin = int(objects[i].find("bndbox").findtext("xmin"))
+        ymin = int(objects[i].find("bndbox").findtext("ymin"))
+        xmax = int(objects[i].find("bndbox").findtext("xmax"))
+        ymax = int(objects[i].find("bndbox").findtext("ymax"))
+        cls = objects[i].findtext("name")
+        ground_truths.append(
+            (cls, {"xmin": xmin, "xmax": xmax, "ymin": ymin, "ymax": ymax})
+        )
+
+    return ground_truths

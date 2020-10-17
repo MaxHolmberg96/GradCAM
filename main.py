@@ -20,7 +20,7 @@ from path import *
 
 images_list = get_files(ILSVRC2012VAL_PATH)
 boundingbox_list = get_files(ILSVRC2012VAL_BB_PATH)
-image_index = 514
+image_index = 48236
 
 
 model = VGG16(weights="imagenet", classes=1000)
@@ -32,10 +32,9 @@ preds = model.predict(image)
 decoded_preds = model.decode_predictions(preds, top=1)
 print(decoded_preds)
 gradcam = GradCAM(model.model)
-heatmaps, predictions = get_heatmaps_and_bbs(gradcam=gradcam,
-                                             image=image,
-                                             class_map=get_map_of_classes(preds, decoded_preds),
-                                             top=1)
+heatmaps, boundingboxes = get_heatmaps_and_bbs(gradcam=gradcam, image=image, predictions=preds, top=1)
+
+format_ground_truth(ILSVRC2012VAL_BB_PATH + boundingbox_list[0])
 
 groundtruth = format_ground_truth(ILSVRC2012VAL_BB_PATH + boundingbox_list[image_index])
 print(groundtruth)
