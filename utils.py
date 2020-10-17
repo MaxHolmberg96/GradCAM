@@ -66,19 +66,26 @@ def get_top_class_indices(preds, top=5):
     return np.argsort(-preds)[0][:top]
 
 
-def get_heatmaps_and_bbs(gradcam, image, predictions, top=5):
+def get_map_of_classes(preds, decoded_preds):
+    top_classes = get_top_class_indices(preds, top=len(decoded_preds))
+    m = {}
+    for cls, name in zip(top_classes, decoded_preds):
+        m[cls] = name[0]
+    return m
+
+
+def get_heatmaps_and_bbs(gradcam, image, class_map, top=5):
     heatmaps = []
     max_val = 0
-    predicted_classes = get_top_class_indices(predictions, top=top)
 
-    for predicted_class in predicted_classes:
+    for predicted_class in class_map.keys():
         heatmaps.append(gradcam.get_heatmap(c=predicted_class, image=image).numpy())
         max_val = max(max_val, np.max(np.uint8(heatmaps[-1] * 255)))
 
     bounding_boxes = []
-    for pred, heatmap in zip(predicted_classes, heatmaps):
+    for pred_name, heatmap in zip(class_map.values(), heatmaps):
         bounding_boxes.append(
-            (pred, get_bounding_box_from_heatmap(heatmap, (image.shape[2], image.shape[1]), 0.15 * max_val, max_val))
+            (pred_name, get_bounding_box_from_heatmap(heatmap, (image.shape[2], image.shape[1]), 0.15 * max_val, max_val))
         )
     return heatmaps, bounding_boxes
 
@@ -86,6 +93,23 @@ def get_heatmaps_and_bbs(gradcam, image, predictions, top=5):
 def show_image(image):
     plt.imshow(image.numpy()[0, ...] / 255)
     plt.show()
+
+
+def show_image_with_bb(image, bb):
+    image = draw_bounding_box(image, bb['xmin'], bb['ymin'], bb['xmax'], bb['ymax'])
+    plt.imshow(image.numpy()[0, ...] / 255)
+    plt.show()
+
+def show_image_with_bbs(image, bbs):
+    for bb in bbs:
+        image = draw_bounding_box(image, bb['xmin'], bb['ymin'], bb['xmax'], bb['ymax'])
+    plt.imshow(image.numpy()[0, ...] / 255)
+    plt.show()
+
+
+def show_image_with_heatmap(gradcam, image, c):
+    heatmap = gradcam.get_heatmap(c, image)
+    gradcam.show(heatmap.numpy(), image)
 
 
 def evaluate(predictions, ground_truths):
@@ -123,4 +147,4 @@ def format_ground_truth(file_path):
     xmax = int(root.find("object").find("bndbox").findtext("xmax"))
     ymax = int(root.find("object").find("bndbox").findtext("ymax"))
     cls = root.find("object").findtext("name")
-    return (cls, {'xmin': xmin, 'xmax': xmax, 'ymin': ymin, 'ymax': ymax})
+    return [(cls, {'xmin': xmin, 'xmax': xmax, 'ymin': ymin, 'ymax': ymax})]

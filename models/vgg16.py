@@ -21,7 +21,7 @@ class VGG16:
         return tf.nn.softmax(self.model.predict(X)).numpy()
 
     def decode_predictions(self, preds, top=5):
-        return tf.keras.applications.vgg16.decode_predictions(preds=preds, top=top)
+        return tf.keras.applications.vgg16.decode_predictions(preds=preds, top=top)[0]
 
     def summary(self):
         self.model.summary()
