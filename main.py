@@ -34,7 +34,6 @@ print(model.decode_predictions(preds, top=5))
 gradcam = GradCAM(model.model)
 heatmaps, boundingboxes = get_heatmaps_and_bbs(gradcam=gradcam, image=image, predictions=preds, top=1)
 
-print(boundingboxes)
-for i in range(len(boundingboxes)):
-    show_image_with_boundingbox(image, boundingboxes[i])
+format_ground_truth(ILSVRC2012VAL_BB_PATH + boundingbox_list[0])
+
 
