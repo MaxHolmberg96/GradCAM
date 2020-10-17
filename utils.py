@@ -116,10 +116,10 @@ def evaluate(predictions, ground_truths):
 
 def overlap(rect1, rect2):
     intersect_area = max(
-        0, min(rect1["x_max"], rect2["x_max"]) - max(rect1["x_min"], rect2["x_min"])
+        0, min(rect1["xmax"], rect2["xmax"]) - max(rect1["xmin"], rect2["xmin"])
     ) * max(
-        0, min(rect1["y_max"], rect2["y_max"]) - max(rect1["y_min"], rect2["y_min"])
+        0, min(rect1["ymax"], rect2["ymax"]) - max(rect1["ymin"], rect2["ymin"])
     )
-    area_rect1 = (rect1["x_max"] - rect1["x_min"]) * (rect1["y_max"] - rect1["y_min"])
-    area_rect2 = (rect2["x_max"] - rect2["x_min"]) * (rect2["y_max"] - rect2["y_min"])
+    area_rect1 = (rect1["xmax"] - rect1["xmin"]) * (rect1["ymax"] - rect1["ymin"])
+    area_rect2 = (rect2["xmax"] - rect2["xmin"]) * (rect2["ymax"] - rect2["ymin"])
     return intersect_area / (area_rect1 + area_rect2 - intersect_area)
