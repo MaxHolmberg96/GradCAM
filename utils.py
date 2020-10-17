@@ -73,14 +73,17 @@ def get_top_class_indices(preds, top=5):
 def get_heatmaps_and_bbs(gradcam, image, predictions, top=5):
     heatmaps = []
     max_val = 0
-    for predicted_class in get_top_class_indices(predictions, top=top):
+    predicted_classes = get_top_class_indices(predictions, top=top)
+
+    for predicted_class in predicted_classes:
         heatmaps.append(gradcam.get_heatmap(c=predicted_class, image=image).numpy())
         max_val = max(max_val, np.max(np.uint8(heatmaps[-1] * 255)))
 
     bounding_boxes = []
-    for heatmap in heatmaps:
-        bounding_boxes.append(get_bounding_box_from_heatmap(heatmap, (image.shape[2], image.shape[1]), 0.15 * max_val, max_val))
-
+    for pred, heatmap in zip(predicted_classes, heatmaps):
+        bounding_boxes.append(
+            (pred, get_bounding_box_from_heatmap(heatmap, (image.shape[2], image.shape[1]), 0.15 * max_val, max_val))
+        )
     return heatmaps, bounding_boxes
 
 
