@@ -34,16 +34,22 @@ def draw_bounding_box_from_file(image, file_path):
     return draw_bounding_box(image, xmin, ymin, xmax, ymax)
 
 
-def draw_bounding_box_from_heatmap(image, heatmap, max_val):
-    heatmap = cv2.resize(heatmap, (image.shape[2], image.shape[1]), cv2.INTER_LINEAR)
+def get_contours(heatmap, reshape_size, threshold, max_val):
+    heatmap = cv2.resize(heatmap, reshape_size, cv2.INTER_LINEAR)
     heatmap = np.uint8(heatmap * 255)
-    threshold = 0.15 * max_val
     thresh = cv2.threshold(heatmap, threshold, max_val, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
     cnts = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     cnts = cnts[0] if len(cnts) == 2 else cnts[1]
-    #img = np.uint8(image)
-    #cv2.drawContours(img[0], cnts, -1, (0, 255, 0), 3)
-    #cv2.imshow('Contours', img[0])
+    return cnts
+
+
+def draw_bounding_box_from_heatmap(image, heatmap, threshold, max_val):
+    boundingbox = get_bounding_box_from_heatmap(heatmap, (image.shape[2], image.shape[1]), threshold, max_val)
+    return draw_bounding_box(image, boundingbox['xmin'], boundingbox['ymin'], boundingbox['xmax'], boundingbox['ymax'])
+
+
+def get_bounding_box_from_heatmap(heatmap, reshape_size, threshold, max_val):
+    cnts = get_contours(heatmap, reshape_size, threshold, max_val)
     max_contour = -1
     max_area = -1
     for c in cnts:
@@ -56,17 +62,36 @@ def draw_bounding_box_from_heatmap(image, heatmap, max_val):
         xmin, ymin, w, h = cv2.boundingRect(max_contour)
         xmax = xmin + w
         ymax = ymin + h
-        return draw_bounding_box(image, xmin, ymin, xmax, ymax)
-    return image
+        return {"xmin": xmin, "ymin": ymin, "xmax": xmax, "ymax": ymax}
+    return None
 
 
 def get_top_class_indices(preds, top=5):
     return np.argsort(-preds)[0][:top]
 
 
+def get_heatmaps_and_bbs(gradcam, image, predictions, top=5):
+    heatmaps = []
+    max_val = 0
+    for predicted_class in get_top_class_indices(predictions, top=top):
+        heatmaps.append(gradcam.get_heatmap(c=predicted_class, image=image).numpy())
+        max_val = max(max_val, np.max(np.uint8(heatmaps[-1] * 255)))
+
+    bounding_boxes = []
+    for heatmap in heatmaps:
+        bounding_boxes.append(get_bounding_box_from_heatmap(heatmap, (image.shape[2], image.shape[1]), 0.15 * max_val, max_val))
+
+    return heatmaps, bounding_boxes
+
+
 def show_image(image):
     plt.imshow(image.numpy()[0, ...] / 255)
     plt.show()
+
+
+def show_image_with_boundingbox(image, boundingbox):
+    show_image(draw_bounding_box(image, boundingbox['xmin'], boundingbox['ymin'], boundingbox['xmax'], boundingbox['ymax']))
+
 
 def evaluate(predictions, ground_truths):
     min_error_list = []
