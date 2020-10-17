@@ -7,10 +7,12 @@ import matplotlib.pyplot as plt
 
 def get_files(file_path):
     from os import walk
+
     f = []
     for _, _, filenames in walk(file_path):
         f.extend(filenames)
     return f
+
 
 def draw_bounding_box(image, xmin, ymin, xmax, ymax):
     if len(image.shape) == 4:
@@ -26,22 +28,38 @@ def draw_bounding_box(image, xmin, ymin, xmax, ymax):
 
 
 def draw_bounding_box_from_file(image, file_path):
-    bounding_box = format_ground_truth(file_path)[1]
-    return draw_bounding_box(image, bounding_box['xmin'], bounding_box['ymin'], bounding_box['xmax'], bounding_box['ymax'])
+    bounding_box = format_ground_truth(file_path)[0][1]
+    return draw_bounding_box(
+        image,
+        bounding_box["xmin"],
+        bounding_box["ymin"],
+        bounding_box["xmax"],
+        bounding_box["ymax"],
+    )
 
 
 def get_contours(heatmap, reshape_size, threshold, max_val):
     heatmap = cv2.resize(heatmap, reshape_size, cv2.INTER_LINEAR)
     heatmap = np.uint8(heatmap * 255)
-    thresh = cv2.threshold(heatmap, threshold, max_val, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
+    thresh = cv2.threshold(
+        heatmap, threshold, max_val, cv2.THRESH_BINARY + cv2.THRESH_OTSU
+    )[1]
     cnts = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     cnts = cnts[0] if len(cnts) == 2 else cnts[1]
     return cnts
 
 
 def draw_bounding_box_from_heatmap(image, heatmap, threshold, max_val):
-    boundingbox = get_bounding_box_from_heatmap(heatmap, (image.shape[2], image.shape[1]), threshold, max_val)
-    return draw_bounding_box(image, boundingbox['xmin'], boundingbox['ymin'], boundingbox['xmax'], boundingbox['ymax'])
+    boundingbox = get_bounding_box_from_heatmap(
+        heatmap, (image.shape[2], image.shape[1]), threshold, max_val
+    )
+    return draw_bounding_box(
+        image,
+        boundingbox["xmin"],
+        boundingbox["ymin"],
+        boundingbox["xmax"],
+        boundingbox["ymax"],
+    )
 
 
 def get_bounding_box_from_heatmap(heatmap, reshape_size, threshold, max_val):
@@ -78,7 +96,12 @@ def get_heatmaps_and_bbs(gradcam, image, predictions, top=5):
     bounding_boxes = []
     for pred, heatmap in zip(predicted_classes, heatmaps):
         bounding_boxes.append(
-            (pred, get_bounding_box_from_heatmap(heatmap, (image.shape[2], image.shape[1]), 0.15 * max_val, max_val))
+            (
+                pred,
+                get_bounding_box_from_heatmap(
+                    heatmap, (image.shape[2], image.shape[1]), 0.15 * max_val, max_val
+                ),
+            )
         )
     return heatmaps, bounding_boxes
 
@@ -109,18 +132,24 @@ def evaluate(predictions, ground_truths):
 def overlap(rect1, rect2):
     intersect_area = max(
         0, min(rect1["xmax"], rect2["xmax"]) - max(rect1["xmin"], rect2["xmin"])
-    ) * max(
-        0, min(rect1["ymax"], rect2["ymax"]) - max(rect1["ymin"], rect2["ymin"])
-    )
+    ) * max(0, min(rect1["ymax"], rect2["ymax"]) - max(rect1["ymin"], rect2["ymin"]))
     area_rect1 = (rect1["xmax"] - rect1["xmin"]) * (rect1["ymax"] - rect1["ymin"])
     area_rect2 = (rect2["xmax"] - rect2["xmin"]) * (rect2["ymax"] - rect2["ymin"])
     return intersect_area / (area_rect1 + area_rect2 - intersect_area)
 
+
 def format_ground_truth(file_path):
     root = ET.parse(file_path).getroot()
-    xmin = int(root.find("object").find("bndbox").findtext("xmin"))
-    ymin = int(root.find("object").find("bndbox").findtext("ymin"))
-    xmax = int(root.find("object").find("bndbox").findtext("xmax"))
-    ymax = int(root.find("object").find("bndbox").findtext("ymax"))
-    cls = root.find("object").findtext("name")
-    return (cls, {'xmin': xmin, 'xmax': xmax, 'ymin': ymin, 'ymax': ymax})
+    objects = root.findall("object")
+    ground_truths = []
+    for i in range(len(objects)):
+        xmin = int(objects[i].find("bndbox").findtext("xmin"))
+        ymin = int(objects[i].find("bndbox").findtext("ymin"))
+        xmax = int(objects[i].find("bndbox").findtext("xmax"))
+        ymax = int(objects[i].find("bndbox").findtext("ymax"))
+        cls = objects[i].findtext("name")
+        ground_truths.append(
+            (cls, {"xmin": xmin, "xmax": xmax, "ymin": ymin, "ymax": ymax})
+        )
+
+    return ground_truths
