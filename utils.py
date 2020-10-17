@@ -26,12 +26,8 @@ def draw_bounding_box(image, xmin, ymin, xmax, ymax):
 
 
 def draw_bounding_box_from_file(image, file_path):
-    root = ET.parse(file_path).getroot()
-    xmin = int(root.find("object").find("bndbox").findtext("xmin"))
-    ymin = int(root.find("object").find("bndbox").findtext("ymin"))
-    xmax = int(root.find("object").find("bndbox").findtext("xmax"))
-    ymax = int(root.find("object").find("bndbox").findtext("ymax"))
-    return draw_bounding_box(image, xmin, ymin, xmax, ymax)
+    bounding_box = format_ground_truth(file_path)[1]
+    return draw_bounding_box(image, bounding_box['xmin'], bounding_box['ymin'], bounding_box['xmax'], bounding_box['ymax'])
 
 
 def get_contours(heatmap, reshape_size, threshold, max_val):
@@ -92,10 +88,6 @@ def show_image(image):
     plt.show()
 
 
-def show_image_with_boundingbox(image, boundingbox):
-    show_image(draw_bounding_box(image, boundingbox['xmin'], boundingbox['ymin'], boundingbox['xmax'], boundingbox['ymax']))
-
-
 def evaluate(predictions, ground_truths):
     min_error_list = []
     for prediction in predictions:
@@ -123,3 +115,12 @@ def overlap(rect1, rect2):
     area_rect1 = (rect1["xmax"] - rect1["xmin"]) * (rect1["ymax"] - rect1["ymin"])
     area_rect2 = (rect2["xmax"] - rect2["xmin"]) * (rect2["ymax"] - rect2["ymin"])
     return intersect_area / (area_rect1 + area_rect2 - intersect_area)
+
+def format_ground_truth(file_path):
+    root = ET.parse(file_path).getroot()
+    xmin = int(root.find("object").find("bndbox").findtext("xmin"))
+    ymin = int(root.find("object").find("bndbox").findtext("ymin"))
+    xmax = int(root.find("object").find("bndbox").findtext("xmax"))
+    ymax = int(root.find("object").find("bndbox").findtext("ymax"))
+    cls = root.find("object").findtext("name")
+    return (cls, {'xmin': xmin, 'xmax': xmax, 'ymin': ymin, 'ymax': ymax})

@@ -34,5 +34,6 @@ print(model.decode_predictions(preds, top=5))
 gradcam = GradCAM(model.model)
 heatmaps, boundingboxes = get_heatmaps_and_bbs(gradcam=gradcam, image=image, predictions=preds, top=1)
 
+format_ground_truth(ILSVRC2012VAL_BB_PATH + boundingbox_list[0])
 
-print(overlap({'xmin': 511, 'ymin': 41, 'xmax': 577, 'ymax': 76}, {'xmin': 544, 'ymin': 59, 'xmax': 610, 'ymax': 94}))
+
