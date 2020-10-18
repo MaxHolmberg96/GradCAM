@@ -15,7 +15,9 @@ class VGG16:
         return tf.image.resize(image, self.shape)
 
     def load_image(self, file_path):
-        return tf.cast(tf.image.decode_png(tf.io.read_file(file_path)), dtype=tf.float32)
+        return tf.cast(
+            tf.image.decode_png(tf.io.read_file(file_path)), dtype=tf.float32
+        )
 
     def predict(self, X):
         return tf.nn.softmax(self.model.predict(X)).numpy()

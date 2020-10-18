@@ -13,6 +13,7 @@ def get_files(file_path):
         f.extend(filenames)
     return f
 
+
 def draw_bounding_box(image, xmin, ymin, xmax, ymax):
     if len(image.shape) == 4:
         height = image.shape[1]
@@ -40,7 +41,9 @@ def draw_bounding_box_from_file(image, file_path):
 def get_contours(heatmap, reshape_size, threshold, max_val):
     heatmap = cv2.resize(heatmap, reshape_size, cv2.INTER_LINEAR)
     heatmap = np.uint8(heatmap * 255)
-    thresh = cv2.threshold(heatmap, threshold, max_val, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
+    thresh = cv2.threshold(
+        heatmap, threshold, max_val, cv2.THRESH_BINARY + cv2.THRESH_OTSU
+    )[1]
     cnts = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     cnts = cnts[0] if len(cnts) == 2 else cnts[1]
     return cnts
@@ -100,7 +103,12 @@ def get_heatmaps_and_bbs(gradcam, image, class_map):
     bounding_boxes = []
     for pred_name, heatmap in zip(class_map.values(), heatmaps):
         bounding_boxes.append(
-            (pred_name, get_bounding_box_from_heatmap(heatmap, (image.shape[2], image.shape[1]), 0.15 * max_val, max_val))
+            (
+                pred_name,
+                get_bounding_box_from_heatmap(
+                    heatmap, (image.shape[2], image.shape[1]), 0.15 * max_val, max_val
+                ),
+            )
         )
     return heatmaps, bounding_boxes
 
@@ -111,14 +119,14 @@ def show_image(image):
 
 
 def show_image_with_bb(image, bb):
-    image = draw_bounding_box(image, bb['xmin'], bb['ymin'], bb['xmax'], bb['ymax'])
+    image = draw_bounding_box(image, bb["xmin"], bb["ymin"], bb["xmax"], bb["ymax"])
     plt.imshow(image.numpy()[0, ...] / 255)
     plt.show()
 
 
 def show_image_with_bbs(image, bbs):
     for bb in bbs:
-        image = draw_bounding_box(image, bb['xmin'], bb['ymin'], bb['xmax'], bb['ymax'])
+        image = draw_bounding_box(image, bb["xmin"], bb["ymin"], bb["xmax"], bb["ymax"])
     plt.imshow(image.numpy()[0, ...] / 255)
     plt.show()
 

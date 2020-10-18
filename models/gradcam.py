@@ -2,6 +2,7 @@ import tensorflow as tf
 import cv2
 import matplotlib.pyplot as plt
 
+
 class GradCAM:
     def __init__(self, model):
         self.model = model
@@ -15,7 +16,8 @@ class GradCAM:
 
     def get_all_layer_outputs(self, X):
         func = tf.keras.backend.function(
-            [self.model.layers[0].input], [layer.output for layer in self.model.layers[1:]]
+            [self.model.layers[0].input],
+            [layer.output for layer in self.model.layers[1:]],
         )
         layer_outputs = func([X])
         layer_outputs.insert(0, X)  # Add so image is the output of the input :)
@@ -24,7 +26,8 @@ class GradCAM:
     def get_gradients(self, c, image):
         conv_layer = self._get_last_conv_layer()
         grad_model = tf.keras.models.Model(
-            [self.model.inputs], [self.model.get_layer(conv_layer).output, self.model.output]
+            [self.model.inputs],
+            [self.model.get_layer(conv_layer).output, self.model.output],
         )
 
         with tf.GradientTape() as tape:
@@ -44,6 +47,8 @@ class GradCAM:
     def show(self, heatmap, image):
         plt.imshow(image[0, ...] / 255)
         if heatmap is not None:
-            cam = cv2.resize(heatmap, (image.shape[2], image.shape[1]), cv2.INTER_LINEAR)
+            cam = cv2.resize(
+                heatmap, (image.shape[2], image.shape[1]), cv2.INTER_LINEAR
+            )
             plt.imshow(cam, cmap="jet", alpha=0.5)
         plt.show()
