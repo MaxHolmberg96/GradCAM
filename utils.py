@@ -21,7 +21,7 @@ def draw_bounding_box(image, xmin, ymin, xmax, ymax):
     else:
         print("Image need to have shape (batch, height, width, channels)")
         return
-    box = np.array([ymin, xmin, ymax, xmax])
+    box = np.array([ymin / height, xmin / width, ymax / height, xmax / width])
     boxes = box.reshape([1, 1, 4])
     colors = np.array([[1.0, 0.0, 0.0], [0.0, 0.0, 1.0]])
     return tf.image.draw_bounding_boxes(image, boxes, colors)
@@ -60,6 +60,25 @@ def draw_bounding_box_from_heatmap(image, heatmap, threshold, max_val):
         boundingbox["xmax"],
         boundingbox["ymax"],
     )
+
+
+def scale_bbs(original_shape, image_shape, predictions):
+    scale_x = original_shape[2] / image_shape[2]
+    scale_y = original_shape[1] / image_shape[1]
+    new_predictions = []
+    for cls, bb in predictions:
+        new_predictions.append(
+            (
+                cls,
+                {
+                    "xmin": bb["xmin"] * scale_x,
+                    "xmax": bb["xmax"] * scale_x,
+                    "ymin": bb["ymin"] * scale_y,
+                    "ymax": bb["ymax"] * scale_y,
+                },
+            )
+        )
+    return new_predictions
 
 
 def get_bounding_box_from_heatmap(heatmap, reshape_size, threshold, max_val):
@@ -124,9 +143,12 @@ def show_image_with_bb(image, bb):
     plt.show()
 
 
-def show_image_with_bbs(image, bbs):
-    for bb in bbs:
-        image = draw_bounding_box(image, bb["xmin"], bb["ymin"], bb["xmax"], bb["ymax"])
+def show_image_with_bbs(image, *bbs_list):
+    for bbs in bbs_list:
+        for bb in bbs:
+            image = draw_bounding_box(
+                image, bb[1]["xmin"], bb[1]["ymin"], bb[1]["xmax"], bb[1]["ymax"]
+            )
     plt.imshow(image.numpy()[0, ...] / 255)
     plt.show()
 

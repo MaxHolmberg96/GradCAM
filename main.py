@@ -1,4 +1,5 @@
 import tensorflow as tf
+from tqdm import trange
 
 gpus = tf.config.experimental.list_physical_devices("GPU")
 if gpus:
@@ -26,26 +27,30 @@ image_index = 48236
 
 model = VGG16(weights="imagenet", classes=1000)
 model.summary()
-image = model.load_image(ILSVRC2012VAL_PATH + images_list[image_index])
-image = model.preprocess_image(image)
-image = tf.expand_dims(image, 0)
-preds = model.predict(image)
-decoded_preds = model.decode_predictions(preds, top=5)
-print(decoded_preds)
-gradcam = GradCAM(model.model)
-heatmaps, predictions = get_heatmaps_and_bbs(
-    gradcam=gradcam, image=image, class_map=get_map_of_classes(preds, decoded_preds)
-)
+error = []
+for image_index in trange(1000):
+    original = tf.expand_dims(
+        model.load_image(ILSVRC2012VAL_PATH + images_list[image_index]), 0
+    )
+    image = model.load_image(ILSVRC2012VAL_PATH + images_list[image_index])
+    image = model.preprocess_image(image)
+    image = tf.expand_dims(image, 0)
+    preds = model.predict(image)
+    decoded_preds = model.decode_predictions(preds, top=5)
+    # print(decoded_preds)
+    gradcam = GradCAM(model.model)
+    heatmaps, predictions = get_heatmaps_and_bbs(
+        gradcam=gradcam, image=image, class_map=get_map_of_classes(preds, decoded_preds)
+    )
 
-groundtruth = format_ground_truth(ILSVRC2012VAL_BB_PATH + boundingbox_list[image_index])
-print(groundtruth)
-print(evaluate(predictions=predictions, ground_truths=groundtruth))
-bbs = []
-for gbb in groundtruth:
-    bbs.append(gbb[1])
-
-orginal = tf.expand_dims(
-    model.load_image(ILSVRC2012VAL_PATH + images_list[image_index]), 0
-)
-show_image_with_bbs(orginal, bbs)
+    groundtruth = format_ground_truth(
+        ILSVRC2012VAL_BB_PATH + boundingbox_list[image_index]
+    )
+    # print(groundtruth)
+    # print(evaluate(predictions=predictions, ground_truths=groundtruth))
+    predictions = scale_bbs(original.shape, image.shape, predictions)
+    # show_image_with_bbs(original, groundtruth, predictions)
+    error.append(evaluate(predictions, groundtruth))
 # show_image_with_heatmap(gradcam, image, np.argmax(preds))
+
+print(np.mean(error))
