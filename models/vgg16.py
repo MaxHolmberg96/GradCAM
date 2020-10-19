@@ -12,6 +12,9 @@ class VGG16:
         self.shape = (self.model.input_shape[1], self.model.input_shape[2])
 
     def preprocess_image(self, image):
+        # Check if grayscale
+        if image.shape[-1] == 1:
+            image = tf.image.grayscale_to_rgb(image)
         return tf.image.resize(image, self.shape)
 
     def load_image(self, file_path):

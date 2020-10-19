@@ -14,21 +14,23 @@ if gpus:
         print(e)
 
 
-from models.vgg16 import VGG16
+from models.vgg19 import VGG19
 from models.gradcam import GradCAM
 from utils import *
 from path import *
-
+from tqdm import tqdm
 
 images_list = get_files(ILSVRC2012VAL_PATH)
 boundingbox_list = get_files(ILSVRC2012VAL_BB_PATH)
 image_index = 48236
 
 
-model = VGG16(weights="imagenet", classes=1000)
+model = VGG19(weights="imagenet", classes=1000)
 model.summary()
 error = []
-for image_index in trange(1000):
+classification_error = []
+progress_bar = tqdm(range(50000))
+for image_index in progress_bar:
     original = tf.expand_dims(
         model.load_image(ILSVRC2012VAL_PATH + images_list[image_index]), 0
     )
@@ -36,8 +38,7 @@ for image_index in trange(1000):
     image = model.preprocess_image(image)
     image = tf.expand_dims(image, 0)
     preds = model.predict(image)
-    decoded_preds = model.decode_predictions(preds, top=5)
-    # print(decoded_preds)
+    decoded_preds = model.decode_predictions(preds=preds, top=5)
     gradcam = GradCAM(model.model)
     heatmaps, predictions = get_heatmaps_and_bbs(
         gradcam=gradcam, image=image, class_map=get_map_of_classes(preds, decoded_preds)
@@ -50,7 +51,26 @@ for image_index in trange(1000):
     # print(evaluate(predictions=predictions, ground_truths=groundtruth))
     predictions = scale_bbs(original.shape, image.shape, predictions)
     # show_image_with_bbs(original, groundtruth, predictions)
+    """heatmap = gradcam.get_heatmap(np.argmax(preds), image).numpy()
+    show_contours(
+        image,
+        heatmap,
+        (image.shape[2], image.shape[1]),
+        np.max(heatmap) * 0.15,
+        np.max(heatmap),
+    )
+    """
+    # print("groundtruth", groundtruth, "predictions", predictions)
+    # Calculate the good stuff
+    classification_error.append(evaluate_classification(predictions, groundtruth))
     error.append(evaluate(predictions, groundtruth))
+
+    progress_bar.set_description(
+        "Mean error: {:02f}, Classification error: {:02f}".format(
+            np.mean(error), np.mean(classification_error)
+        )
+    )
 # show_image_with_heatmap(gradcam, image, np.argmax(preds))
 
 print(np.mean(error))
+print(np.mean(classification_error))

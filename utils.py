@@ -41,6 +41,7 @@ def draw_bounding_box_from_file(image, file_path):
 def get_contours(heatmap, reshape_size, threshold, max_val):
     heatmap = cv2.resize(heatmap, reshape_size, cv2.INTER_LINEAR)
     heatmap = np.uint8(heatmap * 255)
+    heatmap[heatmap <= threshold] = 0
     thresh = cv2.threshold(
         heatmap, threshold, max_val, cv2.THRESH_BINARY + cv2.THRESH_OTSU
     )[1]
@@ -79,6 +80,14 @@ def scale_bbs(original_shape, image_shape, predictions):
             )
         )
     return new_predictions
+
+
+def show_contours(image, heatmap, reshape_size, threshold, max_val):
+    cnts = get_contours(heatmap, reshape_size, threshold, max_val)
+    image = np.uint8(image)[0]
+    cv2.drawContours(image, cnts, -1, (0, 255, 0), 3)
+    cv2.imshow("contours", image)
+    cv2.waitKey(0)
 
 
 def get_bounding_box_from_heatmap(heatmap, reshape_size, threshold, max_val):
@@ -172,6 +181,20 @@ def evaluate(predictions, ground_truths):
             else:
                 f = 1
             max_error_list.append(max(d, f))
+        min_error_list.append(min(max_error_list))
+    return min(min_error_list)
+
+
+def evaluate_classification(predictions, ground_truths):
+    min_error_list = []
+    for prediction in predictions:
+        max_error_list = []
+        for ground_truth in ground_truths:
+            if prediction[0] == ground_truth[0]:
+                d = 0
+            else:
+                d = 1
+            max_error_list.append(d)
         min_error_list.append(min(max_error_list))
     return min(min_error_list)
 
