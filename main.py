@@ -20,7 +20,6 @@ from models.vgg16 import VGG16
 from models.gradcam import GradCAM
 from utils import *
 from path import *
-from tqdm import tqdm
 
 images_list = get_files(ILSVRC2012VAL_PATH)
 boundingbox_list = get_files(ILSVRC2012VAL_BB_PATH)
@@ -29,11 +28,11 @@ image_index = 622  # 48236
 model = VGG16(weights="imagenet", classes=1000)
 model.summary()
 gradcam = GradCAM(model.model)
-top = 1
+top = 5
 n = 50000
 batch_size = 200
 
-save_path = "S:\\DD2412\\"
+save_path = "S:\\DD2412\\only_resized\\"
 # dataset.preprocess_and_save(ILSVRC2012VAL_PATH, ILSVRC2012VAL_BB_PATH, save_path, chunk_size=200)
 localization_error = []
 classification_error = []

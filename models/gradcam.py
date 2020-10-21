@@ -45,18 +45,12 @@ class GradCAM:
         alphas = tf.reduce_mean(grads, axis=[0, 1])
         linear_combinaton = tf.reduce_sum(alphas * output, axis=-1)
         cam = tf.nn.relu(linear_combinaton)
-        return cam
+        # return cam.numpy()
+        return cv2.resize(cam.numpy(), (image.shape[2], image.shape[1]), interpolation=cv2.INTER_CUBIC)
 
-    def show(self, heatmap, image):
-        plt.imshow(image[0, ...] / 255)
-        if heatmap is not None:
-            cam = cv2.resize(heatmap, (image.shape[2], image.shape[1]), cv2.INTER_LINEAR)
-            plt.imshow(cam, cmap="jet", alpha=0.5)
-        plt.show()
-
-    def _get_max_contour(self, image, heatmap, percentage):
+    def _get_max_contour(self, heatmap, percentage):
         # resize heatmap and get contours
-        heatmap = cv2.resize(heatmap, (image.shape[2], image.shape[1]), cv2.INTER_CUBIC)
+        # hetmap = cv2.resize(heatmap, (image.shape[2], image.shape[1]), cv2.INTER_CUBIC)
         threshold = np.max(heatmap) * percentage
         heatmap[heatmap <= threshold] = 0
         heatmap[heatmap != 0] = 1
@@ -81,12 +75,12 @@ class GradCAM:
         image = tf.expand_dims(image, 0)
         boundingboxes = []
         for name, _, _ in decoded_preds:
-            heatmap = self.get_heatmap(c=synset_mappings.name_to_index[name]["index"], image=image).numpy()
-            max_area, max_contour = self._get_max_contour(image, heatmap, percentage)
-            # img = cv2.cvtColor(image[0].numpy(), cv2.COLOR_BGR2RGB)
+            heatmap = self.get_heatmap(c=synset_mappings.name_to_index[name]["index"], image=image)
+            max_area, max_contour = self._get_max_contour(heatmap, percentage)
             # img = np.uint8(image[0].numpy())
             # cv2.drawContours(img, [max_contour], -1, (0, 255, 0), 1)
             # plt.imshow(img)
+            # plt.imshow(heatmap, alpha=0.3)
             # plt.show()
             # plt.imshow(heatmap)
             # plt.show()
@@ -94,26 +88,30 @@ class GradCAM:
                 xmin, ymin, w, h = cv2.boundingRect(max_contour)
                 xmax = xmin + w
                 ymax = ymin + h
+                # xmin *= 224 / 14
+                # ymin *= 224 / 14
+                # xmax *= 224 / 14
+                # ymax *= 224 / 14
                 if original_shape is not None:
                     height, width, _ = original_shape
-                    new_height = height * 256 // min(original_shape[:2])
-                    new_width = width * 256 // min(original_shape[:2])
-                    startx = new_width // 2 - (224 // 2)
-                    starty = new_height // 2 - (224 // 2)
-                    xmin += startx
-                    xmax += startx
-                    ymin += starty
-                    ymax += starty
+                    # new_height = height * 256 // min(original_shape[:2])
+                    # new_width = width * 256 // min(original_shape[:2])
+                    # startx = new_width // 2 - (224 // 2)
+                    # starty = new_height // 2 - (224 // 2)
+                    # xmin += startx
+                    # xmax += startx
+                    # ymin += starty
+                    # ymax += starty
 
-                    xmin *= original_shape[1] / new_width
-                    xmax *= original_shape[1] / new_width
-                    ymin *= original_shape[0] / new_height
-                    ymax *= original_shape[0] / new_height
+                    # xmin *= original_shape[1] / new_width
+                    # xmax *= original_shape[1] / new_width
+                    # ymin *= original_shape[0] / new_height
+                    # ymax *= original_shape[0] / new_height
 
-                    # xmin *= original_shape[1] / image.shape[2]
-                    # xmax *= original_shape[1] / image.shape[2]
-                    # ymin *= original_shape[0] / image.shape[1]
-                    # ymax *= original_shape[0] / image.shape[1]
+                    xmin *= original_shape[1] / image.shape[2]
+                    xmax *= original_shape[1] / image.shape[2]
+                    ymin *= original_shape[0] / image.shape[1]
+                    ymax *= original_shape[0] / image.shape[1]
 
                 boundingboxes.append(
                     (

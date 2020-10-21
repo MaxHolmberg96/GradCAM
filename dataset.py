@@ -2,7 +2,7 @@ import os
 import xml.etree.ElementTree as ET
 import cv2
 import numpy as np
-from tensorflow.keras.applications.vgg19 import preprocess_input
+from tensorflow.keras.applications.vgg16 import preprocess_input
 from tqdm import trange
 from synset_mappings import *
 import tensorflow as tf
@@ -13,9 +13,10 @@ def load_original_image(path):
 
 
 def load_vgg_image(path):
-    img = cv2.imread(path)  # BGR
+    img = cv2.imread(path).astype(np.float32)  # BGR
+
     # Resize
-    height, width, _ = img.shape
+    """height, width, _ = img.shape
     new_height = height * 256 // min(img.shape[:2])
     new_width = width * 256 // min(img.shape[:2])
     img = cv2.resize(img, (new_width, new_height), interpolation=cv2.INTER_CUBIC)
@@ -26,7 +27,9 @@ def load_vgg_image(path):
     starty = height // 2 - (224 // 2)
     img = img[starty : starty + 224, startx : startx + 224]
     assert img.shape[0] == 224 and img.shape[1] == 224, (img.shape, height, width)
-    return img
+    """
+    return cv2.resize(img, (224, 224))
+    # return img
 
 
 def load_ground_truth(path):
