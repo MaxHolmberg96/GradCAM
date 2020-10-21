@@ -4,12 +4,15 @@ import cv2
 import numpy as np
 from tensorflow.keras.applications.vgg19 import preprocess_input
 from tqdm import trange
-
 from synset_mappings import *
 
 
+def load_original_image(path):
+    return cv2.imread(path).astype(np.float32)
+
+
 def load_vgg_image(path):
-    img = cv2.imread(path)
+    img = cv2.imread(path)  # BGR
     # Resize
     height, width, _ = img.shape
     new_height = height * 256 // min(img.shape[:2])
@@ -55,6 +58,7 @@ def preprocess_and_save(x_input_dir, y_input_dir, output_dir, chunk_size=1000):
         if i % chunk_size == 0 and i != 0:
             np.save("{}x_val_{}.npy".format(output_dir, i // chunk_size), x_val)
             np.save("{}y_val_{}.npy".format(output_dir, i // chunk_size), y_val)
+            y_val = np.zeros((chunk_size, 1000))
 
         if i == len(x_files):
             break

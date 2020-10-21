@@ -26,20 +26,18 @@ def top_k_accuracy(y_true, y_pred, k=1):
 
 
 n = 50000
-chunk_size = 1000
+chunk_size = 200
 
 save_path = "S:\\DD2412\\"
-preprocess_and_save(ILSVRC2012VAL_PATH, ILSVRC2012VAL_BB_PATH, save_path)
-from tensorflow.keras.applications.vgg19 import VGG19
-from tensorflow.keras import backend as K
+preprocess_and_save(ILSVRC2012VAL_PATH, ILSVRC2012VAL_BB_PATH, save_path, chunk_size=200)
 
-K.clear_session()
-model = VGG19()
-model.summary()
+model = VGG16("imagenet", 1000)
 accuracy = []
-for i in trange(n // chunk_size):
+pb = trange(n // chunk_size)
+for i in pb:
     x_val, y_val = load_chunk(save_path, i + 1)
     y_pred = model.predict(x_val)
     accuracy.append(top_k_accuracy(y_val, y_pred, k=1))
+    pb.set_description("Mean accuracy {}".format(np.mean(accuracy)))
 
 print(np.mean(accuracy))

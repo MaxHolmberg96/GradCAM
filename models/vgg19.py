@@ -17,15 +17,13 @@ class VGG19:
         return tf.image.resize(image, self.shape)
 
     def load_image(self, file_path):
-        return tf.cast(
-            tf.image.decode_png(tf.io.read_file(file_path)), dtype=tf.float32
-        )
+        return tf.cast(tf.image.decode_png(tf.io.read_file(file_path)), dtype=tf.float32)
 
     def predict(self, X):
         return tf.nn.softmax(self.model.predict(X)).numpy()
 
-    def decode_predictions(self, preds, top=5):
-        return tf.keras.applications.vgg19.decode_predictions(preds=preds, top=top)[0]
+    def decode_predictions(self, preds, top):
+        return tf.keras.applications.vgg19.decode_predictions(preds=preds, top=top)
 
     def summary(self):
         self.model.summary()
