@@ -55,12 +55,14 @@ class GradCAM:
         plt.show()
 
     def _get_max_contour(self, image, heatmap, percentage):
-        threshold = np.max(heatmap) * percentage
         # resize heatmap and get contours
         heatmap = cv2.resize(heatmap, (image.shape[2], image.shape[1]), cv2.INTER_CUBIC)
+        threshold = np.max(heatmap) * percentage
         heatmap[heatmap <= threshold] = 0
         heatmap[heatmap != 0] = 1
         heatmap = np.uint8(heatmap * 255)
+        # thresh = cv2.threshold(heatmap, threshold, np.max(heatmap), cv2.THRESH_BINARY)[1]
+
         cnts = cv2.findContours(heatmap, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         cnts = cnts[0] if len(cnts) == 2 else cnts[1]
         # Find the largest contour
@@ -82,32 +84,37 @@ class GradCAM:
             heatmap = self.get_heatmap(c=synset_mappings.name_to_index[name]["index"], image=image).numpy()
             max_area, max_contour = self._get_max_contour(image, heatmap, percentage)
             # img = cv2.cvtColor(image[0].numpy(), cv2.COLOR_BGR2RGB)
-            # img = np.uint8(img)
+            # img = np.uint8(image[0].numpy())
             # cv2.drawContours(img, [max_contour], -1, (0, 255, 0), 1)
             # plt.imshow(img)
+            # plt.show()
+            # plt.imshow(heatmap)
             # plt.show()
             if max_area != -1:
                 xmin, ymin, w, h = cv2.boundingRect(max_contour)
                 xmax = xmin + w
                 ymax = ymin + h
                 if original_shape is not None:
-                    h, w, _ = original_shape
-                    new_height = h * 256 // min(h, w)
-                    new_width = w * 256 // min(h, w)
+                    height, width, _ = original_shape
+                    new_height = height * 256 // min(original_shape[:2])
+                    new_width = width * 256 // min(original_shape[:2])
                     startx = new_width // 2 - (224 // 2)
                     starty = new_height // 2 - (224 // 2)
                     xmin += startx
                     xmax += startx
                     ymin += starty
                     ymax += starty
-                    # print((xmax - xmin) * (ymax - ymin))
 
                     xmin *= original_shape[1] / new_width
                     xmax *= original_shape[1] / new_width
                     ymin *= original_shape[0] / new_height
                     ymax *= original_shape[0] / new_height
 
-                    # print((xmax - xmin) * (ymax - ymin))
+                    # xmin *= original_shape[1] / image.shape[2]
+                    # xmax *= original_shape[1] / image.shape[2]
+                    # ymin *= original_shape[0] / image.shape[1]
+                    # ymax *= original_shape[0] / image.shape[1]
+
                 boundingboxes.append(
                     (
                         name,

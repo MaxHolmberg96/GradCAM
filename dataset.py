@@ -5,6 +5,7 @@ import numpy as np
 from tensorflow.keras.applications.vgg19 import preprocess_input
 from tqdm import trange
 from synset_mappings import *
+import tensorflow as tf
 
 
 def load_original_image(path):
@@ -19,6 +20,7 @@ def load_vgg_image(path):
     new_width = width * 256 // min(img.shape[:2])
     img = cv2.resize(img, (new_width, new_height), interpolation=cv2.INTER_CUBIC)
     # Crop
+
     height, width, _ = img.shape
     startx = width // 2 - (224 // 2)
     starty = height // 2 - (224 // 2)
@@ -42,7 +44,12 @@ def load_ground_truth(path):
     return ground_truths
 
 
-def preprocess_and_save(x_input_dir, y_input_dir, output_dir, chunk_size=1000):
+def preprocess_and_save(
+    x_input_dir,
+    y_input_dir,
+    output_dir,
+    chunk_size=1000,
+):
     x_files = os.listdir(x_input_dir)
     x_files.sort()
     x_files = [x_input_dir + fn for fn in x_files]
@@ -65,7 +72,7 @@ def preprocess_and_save(x_input_dir, y_input_dir, output_dir, chunk_size=1000):
         # Load (as BGR)
         img = load_vgg_image(x_files[i])
         # Save (as RGB)
-        x_val[i % chunk_size, :, :, :] = img[:, :, ::-1]
+        x_val[i % chunk_size] = img[..., ::-1]  # img[:, :, ::-1]
 
         # All classes for each image are the same so only has to set for one of the ground truths
         gt = load_ground_truth(y_files[i])

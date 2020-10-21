@@ -34,7 +34,7 @@ n = 50000
 batch_size = 200
 
 save_path = "S:\\DD2412\\"
-# preprocess_and_save(ILSVRC2012VAL_PATH, ILSVRC2012VAL_BB_PATH, save_path, chunk_size=200)
+# dataset.preprocess_and_save(ILSVRC2012VAL_PATH, ILSVRC2012VAL_BB_PATH, save_path, chunk_size=200)
 localization_error = []
 classification_error = []
 pb = trange(n // batch_size)
