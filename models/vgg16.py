@@ -36,9 +36,6 @@ class VGG16:
     def predict(self, X):
         return tf.nn.softmax(self.model.predict(X)).numpy()
 
-    def predict_without_softmax(self, X):
-        return self.model.predict(X)
-
     def decode_predictions(self, preds, top):
         return tf.keras.applications.vgg16.decode_predictions(preds=preds, top=top)
 
