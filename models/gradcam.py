@@ -37,16 +37,57 @@ class GradCAM:
             y_c = predictions[:, c]
 
         conv_output = conv_outputs[0]
-        grads = tape.gradient(y_c, conv_outputs)[0]
+        """heatmaps = conv_output.numpy()
+        for i in range(heatmaps.shape[-1]):
+            heatmap = heatmaps[..., i]
+            heatmapshow = None
+            heatmap = cv2.resize(heatmap, (535, 431))
+            heatmapshow = cv2.normalize(
+                heatmap, heatmapshow, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8U
+            )
+            heatmapshow = cv2.applyColorMap(heatmapshow, cv2.COLORMAP_JET)
+            cv2.imwrite("activations/activation_{}.png".format(i), heatmapshow)
+        """
+        grads = tape.gradient(y_c, conv_outputs)
+        grads = grads[0]
+        return grads, conv_output
+
+    def get_gradients_text(self, c, image, conv_layer, inverse=False):
+        grad_model = tf.keras.models.Model(
+            [self.model.inputs],
+            [self.model.get_layer(conv_layer).output, self.model.output],
+        )
+
+        with tf.GradientTape() as tape:
+            conv_outputs, predictions = grad_model(image)
+            y_c = predictions[:, c]
+
+        conv_output = conv_outputs[0]
+        grads = tape.gradient(y_c, conv_outputs)
+        grads = grads[0]
         return grads, conv_output
 
     def get_heatmap(self, c, image):
         grads, output = self.get_gradients(c, image)
         alphas = tf.reduce_mean(grads, axis=[0, 1])
         linear_combinaton = tf.reduce_sum(alphas * output, axis=-1)
-        cam = tf.nn.relu(linear_combinaton)
-        # return cam.numpy()
-        return cv2.resize(cam.numpy(), (image.shape[2], image.shape[1]), interpolation=cv2.INTER_CUBIC)
+        linear_combinaton = cv2.resize(
+            linear_combinaton.numpy(), (image.shape[2], image.shape[1]), interpolation=cv2.INTER_CUBIC
+        )
+        cam = tf.nn.relu(linear_combinaton).numpy()
+        cam = cam / np.max(cam)
+        return cam
+
+    def get_heatmap_text(self, c, image, layer_name, inverse=False):
+        grads, output = self.get_gradients_text(c, image, layer_name, inverse)
+        alphas = tf.reduce_mean(grads, axis=[0, 1])
+        linear_combinaton = tf.reduce_sum(alphas * output, axis=-1)
+        linear_combinaton = cv2.resize(
+            linear_combinaton.numpy(), (image.shape[0], image.shape[1]), interpolation=cv2.INTER_CUBIC
+        )
+        cam = tf.nn.relu(linear_combinaton).numpy()
+        cam = cam / np.max(cam)
+        return cam
 
     def _get_max_contour(self, heatmap, percentage):
         # resize heatmap and get contours
