@@ -70,7 +70,7 @@ else:
     length = len(sentence)
 
     heatmap_plot = heatmap_avg.T[:, -length:] / np.max(heatmap_avg.T[:, -length:])
-    pad = 20 - length
+    pad = 10 - length
     heatmap_plot = np.pad(heatmap_plot, [(0, 0), (0, pad)])
     fig = plt.figure(figsize=(50, 4))
     ax = fig.add_subplot(111)

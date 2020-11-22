@@ -30,5 +30,5 @@ Original                  |  Heatmap overlay (predicted: Curly coated retriever)
 :-------------------------:|:-------------------------:
 ![](images/dog.JPEG)   |  ![](results/dog.png)
 
-#### Grad-CAM for sentiment classification
+#### Grad-CAM for sentiment classification (predicted: positive)
 ![](results/text.png)
