@@ -16,10 +16,11 @@ python run.py --text --output output_path --weights sentiment_cnn_weights --sent
 
 
 
-### Results
+## Results
+#### Grad-CAM for Image classification
 Original                   |  Heatmap overlay (predicted: Leopard)
 :-------------------------:|:-------------------------:
-![](images/leopard.jpeg)   |  ![](results/cherry_picked_result.png)
+![](images/leopard.JPEG)   |  ![](results/cherry_picked_result.png)
 
 Original                  |  Heatmap overlay (predicted: Egyptian cat)
 :-------------------------:|:-------------------------:
@@ -27,6 +28,7 @@ Original                  |  Heatmap overlay (predicted: Egyptian cat)
 
 Original                  |  Heatmap overlay (predicted: Curly coated retriever)
 :-------------------------:|:-------------------------:
-![](images/dog.jpeg)   |  ![](results/dog.png)
+![](images/dog.JPEG)   |  ![](results/dog.png)
 
+#### Grad-CAM for sentiment classification
 ![](results/text.png)
