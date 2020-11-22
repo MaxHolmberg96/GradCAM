@@ -9,6 +9,7 @@ Reimplementation of https://arxiv.org/pdf/1610.02391.pdf in Tensorflow 2.1.
 The datasets and word2vec files for the sentiment classification can be found here:
 * https://www.kaggle.com/rtatman/glove-global-vectors-for-word-representation?select=glove.6B.200d.txt
 * https://www.kaggle.com/c/movie-review-sentiment-analysis-kernels-only/data
+
 Put the files in a folder called dataset-text with the following structure:
 * dataset-text/train.tsv/train.tsv
 * dataset-text/test.tsv/test.tsv
