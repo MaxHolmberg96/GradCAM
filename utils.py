@@ -1,6 +1,4 @@
-import tensorflow as tf
 import numpy as np
-import xml.etree.ElementTree as ET
 import cv2
 import matplotlib.pyplot as plt
 
@@ -14,29 +12,20 @@ def get_files(file_path):
     return f
 
 
-def draw_bounding_box(image, xmin, ymin, xmax, ymax):
+def draw_bounding_box(image, xmin, ymin, xmax, ymax, gt):
     if len(image.shape) == 3:
         height = image.shape[0]
         width = image.shape[1]
     else:
         print("Image need to have shape (height, width, channels)")
         return
-    image = tf.expand_dims(image, 0)
-    box = np.array([ymin / height, xmin / width, ymax / height, xmax / width], dtype=np.float32)
-    boxes = box.reshape([1, 1, 4])
-    colors = np.array([[1.0, 0.0, 0.0], [0.0, 0.0, 1.0]])
-    return tf.image.draw_bounding_boxes(image, boxes, colors)[0]
-
-
-def draw_bounding_box_from_file(image, file_path):
-    bounding_box = format_ground_truth(file_path)[0][1]
-    return draw_bounding_box(
-        image,
-        bounding_box["xmin"],
-        bounding_box["ymin"],
-        bounding_box["xmax"],
-        bounding_box["ymax"],
-    )
+    if gt:
+        image = cv2.rectangle(image, (int(xmin), int(ymin)), (int(xmax), int(ymax)), (255, 0, 0), 5)
+        # image = cv2.putText(image, "Ground Truth", (int(xmax) - 90, int(ymax) - 20), 0, 0.3, (255, 0, 0))
+    else:
+        image = cv2.rectangle(image, (int(xmin), int(ymin)), (int(xmax), int(ymax)), (0, 255, 0), 5)
+        # image = cv2.putText(image, "Prediction", (int(xmax) - 60, int(ymax) - 20), 0, 0.3, (0, 255, 0))
+    return image
 
 
 def get_contours(heatmap, reshape_size, threshold, max_val):
@@ -158,15 +147,23 @@ def show_image_with_bb(image, bb):
 
 
 def show_image_with_bbs(image, *bbs_list):
-    for bbs in bbs_list:
-        image = draw_bounding_box(image, bbs[1]["xmin"], bbs[1]["ymin"], bbs[1]["xmax"], bbs[1]["ymax"])
-    plt.imshow(image.numpy() / 255)
-    plt.show()
+    for i, bbs in enumerate(bbs_list):
+        image = draw_bounding_box(
+            image, bbs[1]["xmin"], bbs[1]["ymin"], bbs[1]["xmax"], bbs[1]["ymax"], True if i >= 1 else False
+        )
+    cv2.imwrite("bad_bounding_boxes_example.png", image.astype(np.uint8))
+    # plt.imshow(image / 255)
+    # plt.show()
 
 
-def show_image_with_heatmap(gradcam, image, c):
-    heatmap = gradcam.get_heatmap(c, image)
-    gradcam.show(heatmap.numpy(), image)
+def show_image_with_heatmap(original_image, heatmap, output):
+    heatmap = cv2.resize(heatmap, (original_image.shape[1], original_image.shape[0]))
+    heatmapshow = None
+    heatmapshow = cv2.normalize(heatmap, heatmapshow, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8U)
+    heatmapshow = cv2.applyColorMap(heatmapshow, cv2.COLORMAP_JET)
+    added_image = original_image.astype(np.uint8)
+    added_image = cv2.addWeighted(added_image, 0.4, heatmapshow, 0.6, 0)
+    cv2.imwrite(output, added_image)
 
 
 def evaluate(predictions, ground_truths):

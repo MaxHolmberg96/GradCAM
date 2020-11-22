@@ -2,7 +2,6 @@ import os
 import xml.etree.ElementTree as ET
 import cv2
 import numpy as np
-from tensorflow.keras.applications.vgg16 import preprocess_input
 from tqdm import trange
 from synset_mappings import *
 import tensorflow as tf
@@ -12,24 +11,18 @@ def load_original_image(path):
     return cv2.imread(path).astype(np.float32)
 
 
-def load_vgg_image(path):
-    img = cv2.imread(path).astype(np.float32)  # BGR
+def load_vgg_image(path, model):
+    img = cv2.imread(path).astype(np.float32)
+    img = img[..., ::-1]
+    img = model.preprocess_input(img)
+    img = cv2.resize(img, (224, 224), interpolation=cv2.INTER_CUBIC)
+    return img
 
+
+def load_image(path):
+    img = cv2.imread(path)
     # Resize
-    """height, width, _ = img.shape
-    new_height = height * 256 // min(img.shape[:2])
-    new_width = width * 256 // min(img.shape[:2])
-    img = cv2.resize(img, (new_width, new_height), interpolation=cv2.INTER_CUBIC)
-    # Crop
-
-    height, width, _ = img.shape
-    startx = width // 2 - (224 // 2)
-    starty = height // 2 - (224 // 2)
-    img = img[starty : starty + 224, startx : startx + 224]
-    assert img.shape[0] == 224 and img.shape[1] == 224, (img.shape, height, width)
-    """
-    return cv2.resize(img, (224, 224))
-    # return img
+    return tf.image.resize(img, (224, 224), method=tf.image.ResizeMethod.BICUBIC)[:, :, ::-1]
 
 
 def load_ground_truth(path):
@@ -83,8 +76,8 @@ def preprocess_and_save(
         y_val[i % chunk_size][name_to_index[class_name]["index"]] = 1
 
 
-def load_chunk(directory, chunk_index):
+def load_chunk(directory, chunk_index, model):
     x_val = np.load(directory + "x_val_" + str(chunk_index) + ".npy")  # loaded as RGB
-    x_val = preprocess_input(x_val)  # converted to BGR
+    x_val = model.preprocess_input(x_val)  # converted to BGR
     y_val = np.load(directory + "y_val_" + str(chunk_index) + ".npy")
     return x_val, y_val
