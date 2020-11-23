@@ -46,7 +46,7 @@ else:
     if not args.weights or not args.sentence:
         print("Weights and sentence is required to run GradCAM with sentence cnn")
         exit(0)
-    model = sentencecnn("dataset-text/train.tsv/train.tsv", "dataset-text/glove.6B.200d.txt")
+    model = sentencecnn("dataset-text/train.tsv", "dataset-text/glove.6B.200d.txt")
     model.load_data()
     model.load_weights(args.weights)
     x = model.convert_sentence(args.sentence)

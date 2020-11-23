@@ -11,8 +11,8 @@ The datasets and word2vec files for the sentiment classification can be found he
 * https://www.kaggle.com/c/movie-review-sentiment-analysis-kernels-only/data
 
 Put the files in a folder called dataset-text with the following structure:
-* dataset-text/train.tsv/train.tsv
-* dataset-text/test.tsv/test.tsv
+* dataset-text/train.tsv
+* dataset-text/test.tsv
 * dataset-text/glove.6B.200d.txt
 
 ## Run Grad-CAM for Images
@@ -21,7 +21,7 @@ python run.py --path image_path --output output_path
 ```
 ## Run Grad-CAM for binary sentiment classification
 ```
-python run.py --text --output output_path --weights sentiment_cnn_weights --sentence "I love this movie"
+python run.py --text --output output_path --weights sentiment_cnn_weights/cp.ckpt --sentence "I love this movie"
 ```
 
 
