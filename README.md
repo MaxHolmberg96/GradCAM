@@ -28,7 +28,7 @@ python run.py --text --output output_path --weights sentiment_cnn_weights/cp.ckp
 
 ## Results
 #### Grad-CAM for Image classification
-Original                   |  Heatmap overlay (predicted: Leopard)
+Original                   |  Heatmap overlay (predicted: Mountains)
 :-------------------------:|:-------------------------:
 ![](images/leopard.JPEG)   |  ![](results/leopard.png)
 
